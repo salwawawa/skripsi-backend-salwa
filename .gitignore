@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+
+# Directory for uploaded files
+public/photos/**/*
+!public/photos/.gitkeep
+!public/photos/shops/.gitkeep
+!public/photos/products/.gitkeep
+!public/photos/activities/.gitkeep
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# OS
+.DS_Store
+*.swp
