@@ -1,6 +1,6 @@
-# Salwa Skripsi - Backend API
+# Sentra Tamansari - Backend API
 
-Backend API untuk aplikasi manajemen toko dan kegiatan menggunakan Express.js dan PostgreSQL.
+Backend API untuk aplikasi manajemen toko dan kegiatan Sentra Tamansari menggunakan Express.js dan PostgreSQL.
 
 ## Prasyarat
 
@@ -15,8 +15,8 @@ Sebelum menjalankan aplikasi, pastikan sudah terinstall:
 1. Clone repository:
 
 ```bash
-git clone https://github.com/username/salwa-skripsi.git
-cd salwa-skripsi
+git clone https://github.com/DhanuKampus/sentra-tamansari.git
+cd sentra-tamansari
 ```
 
 2. Install dependencies:
@@ -38,14 +38,14 @@ PGUSER=postgres
 PGPASSWORD=your_password
 PGHOST=localhost
 PGPORT=5432
-PGDATABASE=skripsi_salwa
+PGDATABASE=sentra_tamansari
 PORT=3000
 ```
 
 5. Buat database PostgreSQL:
 
 ```bash
-sudo -u postgres createdb skripsi_salwa
+sudo -u postgres createdb sentra_tamansari
 ```
 
 6. Jalankan migrasi database:
@@ -135,4 +135,5 @@ public/
 ## License
 
 ISC
+
 # sentra-tamansari
