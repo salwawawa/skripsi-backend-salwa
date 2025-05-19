@@ -2,15 +2,39 @@
 
 Backend API untuk aplikasi manajemen toko dan kegiatan Sentra Tamansari menggunakan Express.js dan PostgreSQL.
 
-## Prasyarat
+## Table of Contents
 
-Sebelum menjalankan aplikasi, pastikan sudah terinstall:
+- [Prerequisites](#prerequisites)
+- [Tech Stack](#tech-stack)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Database Setup](#database-setup)
+- [Running the Application](#running-the-application)
+- [Project Structure](#project-structure)
+- [API Documentation](#api-documentation)
+- [Scripts](#scripts)
+- [Contributing](#contributing)
+- [License](#license)
 
-- Node.js (v14 atau lebih baru)
-- PostgreSQL (v12 atau lebih baru)
+## Prerequisites
+
+Sebelum menjalankan aplikasi, pastikan telah terinstall:
+
+- Node.js (v14+)
+- PostgreSQL (v12+)
 - npm atau yarn
+- Git
 
-## Instalasi
+## Tech Stack
+
+- **Runtime**: Node.js
+- **Framework**: Express.js
+- **Database**: PostgreSQL
+- **Image Storage**: Local filesystem
+- **Authentication**: -
+- **Testing**: -
+
+## Installation
 
 1. Clone repository:
 
@@ -25,36 +49,48 @@ cd sentra-tamansari
 npm install
 ```
 
-3. Salin file `.env.example` ke `.env`:
+## Configuration
+
+1. Salin file `.env.example` ke `.env`:
 
 ```bash
 cp .env.example .env
 ```
 
-4. Update konfigurasi database di file `.env`:
+2. Update konfigurasi pada file `.env`:
 
-```
+```ini
+# Database Configuration
 PGUSER=postgres
 PGPASSWORD=your_password
 PGHOST=localhost
 PGPORT=5432
 PGDATABASE=sentra_tamansari
+
+# Server Configuration
 PORT=3000
+NODE_ENV=development
+
+# File Upload Configuration
+UPLOAD_DIR=public/photos
+MAX_FILE_SIZE=5242880
 ```
 
-5. Buat database PostgreSQL:
+## Database Setup
+
+1. Buat database PostgreSQL:
 
 ```bash
 sudo -u postgres createdb sentra_tamansari
 ```
 
-6. Jalankan migrasi database:
+2. Jalankan migrasi database:
 
 ```bash
 npm run migrate:up
 ```
 
-## Menjalankan Aplikasi
+## Running the Application
 
 Development mode dengan auto-reload:
 
@@ -70,70 +106,179 @@ npm start
 
 Server akan berjalan di `http://localhost:3000`
 
-## Struktur Project
+## Project Structure
 
 ```
-src/
-├── config/         # Konfigurasi database dan environment
-├── controllers/    # Logic untuk setiap route
-├── middleware/     # Express middleware
-├── models/         # Database models
-├── routes/         # Route definitions
-└── utils/         # Helper functions
-
-public/
-└── photos/        # Uploaded images
-    ├── shops/
-    ├── products/
-    └── activities/
+sentra-tamansari/
+├── src/
+│   ├── config/         # Database & environment config
+│   ├── controllers/    # Request handlers
+│   ├── middleware/     # Express middleware
+│   ├── models/         # Database models
+│   ├── routes/         # Route definitions
+│   ├── utils/          # Helper functions
+│   └── app.js         # Express app setup
+├── migrations/         # Database migrations
+├── public/            # Static files
+│   └── photos/        # Uploaded images
+│       ├── shops/
+│       ├── products/
+│       └── activities/
+├── .env               # Environment variables
+├── .gitignore        # Git ignore rules
+└── package.json      # Project metadata
 ```
 
-## API Endpoints
+## API Documentation
 
-### Shops
+### Common Response Format
 
-- `GET /api/v1/shops` - Get all shops
-- `POST /api/v1/shops` - Create new shop
-- `GET /api/v1/shops/:id` - Get shop by ID
-- `PUT /api/v1/shops/:id` - Update shop
-- `DELETE /api/v1/shops/:id` - Delete shop
-- `GET /api/v1/shops/:id/products` - Get shop products
+Success Response:
 
-### Categories
+```json
+{
+  "status": "berhasil",
+  "messages": "Message describing the success",
+  "data": {} // Data object or null
+}
+```
 
-- `GET /api/v1/categories` - Get all categories
-- `POST /api/v1/categories` - Create new category
-- `GET /api/v1/categories/:id` - Get category by ID
-- `PUT /api/v1/categories/:id` - Update category
-- `DELETE /api/v1/categories/:id` - Delete category
+Error Response:
 
-### Products
+```json
+{
+  "status": "gagal",
+  "messages": "Message describing the error",
+  "error": "Detailed error message"
+}
+```
 
-- `GET /api/v1/products` - Get all products
-- `POST /api/v1/products` - Create new product
-- `GET /api/v1/products/:id` - Get product by ID
-- `PUT /api/v1/products/:id` - Update product
-- `DELETE /api/v1/products/:id` - Delete product
+### Authentication
 
-### Activities
+Currently no authentication required
 
-- `GET /api/v1/activities` - Get all activities
-- `POST /api/v1/activities` - Create new activity
-- `GET /api/v1/activities/:id` - Get activity by ID
-- `PUT /api/v1/activities/:id` - Update activity
-- `DELETE /api/v1/activities/:id` - Delete activity
+### Available Endpoints
+
+<details>
+<summary><b>Shops API</b></summary>
+
+#### Create Shop
+
+- **POST** `/api/v1/shops`
+- Body:
+
+```json
+{
+  "nama": "Toko Batik Tamansari",
+  "pemilik": "Ibu Sari",
+  "alamat": "Jl. Tamansari No. 123",
+  "block_id": 1,
+  "foto": "data:image/jpeg;base64,...",
+  "deskripsi": "Toko batik khas Yogyakarta"
+}
+```
+
+</details>
+
+<details>
+<summary><b>Categories API</b></summary>
+
+#### Create Category
+
+- **POST** `/api/v1/categories`
+- Body:
+
+```json
+{
+  "nama": "Batik",
+  "deskripsi": "Kategori untuk produk batik"
+}
+```
+
+</details>
+
+<details>
+<summary><b>Products API</b></summary>
+
+#### Create Product
+
+- **POST** `/api/v1/products`
+- Body:
+
+```json
+{
+  "shop_id": 1,
+  "category_id": 1,
+  "nama": "Batik Parang",
+  "harga": 150000,
+  "foto": "data:image/jpeg;base64,...",
+  "description": "Batik motif parang klasik"
+}
+```
+
+</details>
+
+<details>
+<summary><b>Activities API</b></summary>
+
+#### Create Activity
+
+- **POST** `/api/v1/activities`
+- Body:
+
+```json
+{
+  "nama_kegiatan": "Festival Batik Tamansari",
+  "start_date": "2024-06-01T00:00:00.000Z",
+  "end_date": "2024-06-03T23:59:59.000Z",
+  "tempat": "Area Sentra Tamansari",
+  "foto": "data:image/jpeg;base64,...",
+  "deskripsi": "Festival tahunan batik"
+}
+```
+
+</details>
+
+<details>
+<summary><b>Blocks API</b></summary>
+
+#### Create Block
+
+- **POST** `/api/v1/blocks`
+- Body:
+
+```json
+{
+  "nama": "C-1",
+  "deskripsi": "Blok C bagian 1"
+}
+```
+
+</details>
 
 ## Scripts
 
-- `npm start` - Run production server
-- `npm run dev` - Run development server with auto-reload
-- `npm run migrate` - Run database migrations
-- `npm run migrate:up` - Run pending migrations
-- `npm run migrate:down` - Rollback last migration
-- `npm run migrate:create` - Create new migration file
+| Command                  | Description                             |
+| ------------------------ | --------------------------------------- |
+| `npm start`              | Run production server                   |
+| `npm run dev`            | Run development server with auto-reload |
+| `npm run migrate`        | Run database migrations                 |
+| `npm run migrate:up`     | Run pending migrations                  |
+| `npm run migrate:down`   | Rollback last migration                 |
+| `npm run migrate:create` | Create new migration file               |
+
+## Contributing
+
+1. Fork repository
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open Pull Request
 
 ## License
 
 ISC
 
-# sentra-tamansari
+---
+
+Developed with ❤️ for Sentra Tamansari

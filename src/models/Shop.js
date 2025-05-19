@@ -4,23 +4,25 @@ class Shop {
   static async findAll() {
     const query = `
       SELECT s.*,
+        b.nama as block_name,
         COALESCE(json_agg(p.*) FILTER (WHERE p.id IS NOT NULL), '[]') as products
       FROM shops s
+      LEFT JOIN blocks b ON s.block_id = b.id
       LEFT JOIN products p ON s.id = p.shop_id
-      GROUP BY s.id
+      GROUP BY s.id, b.nama
     `
     const result = await db.query(query)
     return result.rows
   }
 
   static async create(data) {
-    const { nama, pemilik, alamat, foto, deskripsi } = data
+    const { nama, pemilik, alamat, block_id, foto, deskripsi } = data
     const query = `
-      INSERT INTO shops (nama, pemilik, alamat, foto, deskripsi)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO shops (nama, pemilik, alamat, block_id, foto, deskripsi)
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *
     `
-    const result = await db.query(query, [nama, pemilik, alamat, foto, deskripsi])
+    const result = await db.query(query, [nama, pemilik, alamat, block_id, foto, deskripsi])
     return result.rows[0]
   }
 

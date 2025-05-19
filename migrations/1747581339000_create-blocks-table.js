@@ -8,33 +8,15 @@ exports.shorthands = undefined
  * @returns {Promise<void> | void}
  */
 exports.up = (pgm) => {
-  pgm.createTable('shops', {
+  pgm.createTable('blocks', {
     id: {
       type: 'serial',
       primaryKey: true,
     },
     nama: {
-      type: 'varchar(100)',
+      type: 'varchar(10)',
       notNull: true,
-    },
-    pemilik: {
-      type: 'varchar(100)',
-      notNull: true,
-    },
-    alamat: {
-      type: 'text',
-      notNull: true,
-    },
-    block_id: {
-      // Add this field
-      type: 'integer',
-      notNull: true,
-      references: 'blocks',
-      onDelete: 'restrict',
-    },
-    foto: {
-      type: 'varchar(255)',
-      notNull: false,
+      unique: true,
     },
     deskripsi: {
       type: 'text',
@@ -52,12 +34,25 @@ exports.up = (pgm) => {
     },
   })
 
-  pgm.createIndex('shops', 'block_id') // Add index for better performance
+  // Add block_id to shops table
+  pgm.addColumn('shops', {
+    block_id: {
+      type: 'integer',
+      notNull: true,
+      references: 'blocks',
+      onDelete: 'restrict',
+    },
+  })
+
+  // Add index for better performance
+  pgm.createIndex('shops', 'block_id')
 }
 
 /**
  * @param pgm {import('node-pg-migrate').MigrationBuilder}
  */
 exports.down = (pgm) => {
-  pgm.dropTable('shops')
+  pgm.dropIndex('shops', 'block_id')
+  pgm.dropColumn('shops', 'block_id')
+  pgm.dropTable('blocks')
 }

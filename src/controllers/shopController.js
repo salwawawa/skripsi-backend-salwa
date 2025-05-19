@@ -1,4 +1,5 @@
 const Shop = require('../models/Shop')
+const Block = require('../models/Block')
 const { successResponse, errorResponse } = require('../utils/response')
 const { saveBase64Image, deleteFile } = require('../utils/fileHelper')
 const path = require('path')
@@ -15,19 +16,30 @@ class ShopController {
   }
 
   async store(req, res) {
-    const { nama, pemilik, alamat, foto, deskripsi } = req.body
+    const { nama, pemilik, alamat, block_id, foto, deskripsi } = req.body
 
     // Validation
-    if (!nama || !pemilik || !alamat || !foto) {
+    if (!nama || !pemilik || !alamat || !block_id || !foto) {
       return errorResponse(
         res,
         'Ada kesalahan dalam pengisian form',
-        'nama, pemilik, alamat, dan foto harus diisi',
+        'nama, pemilik, alamat, block_id, dan foto harus diisi',
         422
       )
     }
 
     try {
+      // Validate block exists
+      const block = await Block.findById(block_id)
+      if (!block) {
+        return errorResponse(
+          res,
+          'Ada kesalahan dalam pengisian form',
+          'block_id tidak ditemukan',
+          422
+        )
+      }
+
       let photoPath = null
       if (foto) {
         const extension = foto.split(';')[0].split('/')[1]
@@ -48,6 +60,7 @@ class ShopController {
         nama,
         pemilik,
         alamat,
+        block_id,
         foto: photoPath,
         deskripsi,
       })

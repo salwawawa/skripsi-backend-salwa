@@ -5,6 +5,7 @@ const shopRoutes = require('./routes/shopRoutes')
 const categoryRoutes = require('./routes/categoryRoutes')
 const productRoutes = require('./routes/productRoutes')
 const activityRoutes = require('./routes/activityRoutes')
+const blockRoutes = require('./routes/blockRoutes')
 const errorHandler = require('./middleware/errorHandler')
 
 const app = express()
@@ -22,6 +23,7 @@ app.use('/api/v1/shops', shopRoutes)
 app.use('/api/v1/categories', categoryRoutes)
 app.use('/api/v1/products', productRoutes)
 app.use('/api/v1/activities', activityRoutes)
+app.use('/api/v1/blocks', blockRoutes)
 
 // Error handling
 app.use(errorHandler)
