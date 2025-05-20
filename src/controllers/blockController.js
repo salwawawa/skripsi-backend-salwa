@@ -1,4 +1,5 @@
 const Block = require('../models/Block')
+const HouseNumber = require('../models/HouseNumber')
 const { successResponse, errorResponse } = require('../utils/response')
 const db = require('../config/database')
 
@@ -134,6 +135,53 @@ class BlockController {
       return successResponse(res, 'Berhasil mengambil data toko di blok ini', shops)
     } catch (error) {
       return errorResponse(res, 'Ups! Gagal mengambil data toko', error.message)
+    }
+  }
+
+  async addHouseNumber(req, res) {
+    const { nomor } = req.body
+    const block_id = req.params.id
+
+    if (!nomor) {
+      return errorResponse(res, 'Ada kesalahan dalam pengisian form', 'nomor harus diisi', 422)
+    }
+
+    try {
+      const block = await Block.findById(block_id)
+      if (!block) {
+        return errorResponse(res, 'Ups! Blok tidak ditemukan', 'Data tidak ditemukan', 404)
+      }
+
+      // Check if house number already exists in this block
+      const existing = await HouseNumber.findByBlockAndNumber(block_id, nomor)
+      if (existing) {
+        return errorResponse(
+          res,
+          'Ada kesalahan dalam pengisian form',
+          'Nomor rumah sudah ada di blok ini',
+          422
+        )
+      }
+
+      await db.query('BEGIN')
+
+      const houseNumber = await HouseNumber.create({ block_id, nomor })
+
+      await db.query('COMMIT')
+
+      return successResponse(res, 'Yeay! Nomor rumah berhasil ditambahkan', houseNumber, 201)
+    } catch (error) {
+      await db.query('ROLLBACK')
+      return errorResponse(res, 'Ups! Ada masalah saat menambahkan nomor rumah', error.message)
+    }
+  }
+
+  async getHouseNumbers(req, res) {
+    try {
+      const houseNumbers = await HouseNumber.findByBlock(req.params.id)
+      return successResponse(res, 'Berhasil mengambil data nomor rumah', houseNumbers)
+    } catch (error) {
+      return errorResponse(res, 'Ups! Gagal mengambil data nomor rumah', error.message)
     }
   }
 }
