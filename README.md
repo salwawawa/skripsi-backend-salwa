@@ -242,6 +242,29 @@ Currently no authentication required
 <details>
 <summary><b>Blocks API</b></summary>
 
+### Blocks Endpoints
+
+#### Get All Blocks
+
+- **GET** `/api/v1/blocks`
+- Response:
+
+```json
+{
+  "status": "berhasil",
+  "messages": "Berhasil mengambil semua data blok",
+  "data": [
+    {
+      "id": 1,
+      "nama": "Blok A",
+      "deskripsi": "Blok bagian utara",
+      "created_at": "2024-05-20T10:00:00.000Z",
+      "updated_at": "2024-05-20T10:00:00.000Z"
+    }
+  ]
+}
+```
+
 #### Create Block
 
 - **POST** `/api/v1/blocks`
@@ -249,10 +272,49 @@ Currently no authentication required
 
 ```json
 {
-  "nama": "C-1",
-  "deskripsi": "Blok C bagian 1"
+  "nama": "Blok A",
+  "deskripsi": "Blok bagian utara"
 }
 ```
+
+#### Get Single Block
+
+- **GET** `/api/v1/blocks/:id`
+
+#### Update Block
+
+- **PUT** `/api/v1/blocks/:id`
+- Body:
+
+```json
+{
+  "nama": "Blok A Updated",
+  "deskripsi": "Deskripsi baru untuk Blok A"
+}
+```
+
+#### Delete Block
+
+- **DELETE** `/api/v1/blocks/:id`
+
+#### Get Shops in Block
+
+- **GET** `/api/v1/blocks/:id/shops`
+
+#### Add House Number to Block
+
+- **POST** `/api/v1/blocks/:id/house-numbers`
+- Body:
+
+```json
+{
+  "nomor": "A-123"
+}
+```
+
+#### Get House Numbers in Block
+
+- **GET** `/api/v1/blocks/:id/house-numbers`
 
 </details>
 
