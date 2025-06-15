@@ -228,12 +228,12 @@ Currently no authentication required
 
 ```json
 {
-  "nama_kegiatan": "Festival Batik Tamansari",
-  "start_date": "2024-06-01T00:00:00.000Z",
-  "end_date": "2024-06-03T23:59:59.000Z",
-  "tempat": "Area Sentra Tamansari",
-  "foto": "data:image/jpeg;base64,...",
-  "deskripsi": "Festival tahunan batik"
+  "nama": "Pengajian Rutin",
+  "waktu_pelaksanaan": "4 Agustus 2025", 
+  "peserta": "Terbuka untuk umum",
+  "deskripsi": "Pengajian rutin untuk meningkatkan pengetahuan dan keterampilan",
+  "lokasi": "Masjid Ar-Rayyan",
+  "foto": "data:image/jpeg"
 }
 ```
 
