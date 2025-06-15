@@ -14,6 +14,20 @@ class Product {
     return result.rows
   }
 
+  static async findByKeyword(keyword) {
+    const query = `
+      SELECT p.*,
+        s.nama as shop_name,
+        c.nama as category_name
+      FROM products p
+      LEFT JOIN shops s ON p.shop_id = s.id
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE p.nama ILIKE $1
+    `
+    const result = await db.query(query, [`%${keyword}%`])
+    return result.rows
+  }
+
   static async create(data) {
     const { shop_id, category_id, nama, harga, foto, description } = data
     const query = `

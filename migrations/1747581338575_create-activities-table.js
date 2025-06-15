@@ -13,25 +13,25 @@ exports.up = (pgm) => {
       type: 'serial',
       primaryKey: true,
     },
-    nama_kegiatan: {
+    nama: {
       type: 'varchar(100)',
       notNull: true,
     },
-    start_date: {
-      type: 'timestamp',
+    waktu_pelaksanaan: {
+      type: 'varchar(255)',
       notNull: true,
     },
-    end_date: {
-      type: 'timestamp',
+    peserta: {
+      type: 'varchar(255)',
       notNull: true,
     },
     deskripsi: {
       type: 'text',
       notNull: false,
     },
-    tempat: {
+    lokasi: {
       type: 'varchar(255)',
-      notNull: true,
+      notNull: false,
     },
     foto: {
       type: 'varchar(255)',

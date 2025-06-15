@@ -4,11 +4,18 @@ const { successResponse, errorResponse } = require('../utils/response')
 const { saveBase64Image, deleteFile } = require('../utils/fileHelper')
 const path = require('path')
 const fs = require('fs')
+const db = require('../config/database')
 
 class ShopController {
   async index(req, res) {
     try {
-      const shops = await Shop.findAll()
+      const keyword = req.query.q
+      let shops
+      if (keyword) {
+        shops = await Shop.findByKeyword(keyword)
+      } else {
+        shops = await Shop.findAll()
+      }
       return successResponse(res, 'Berhasil mengambil semua data toko', shops)
     } catch (error) {
       return errorResponse(res, 'Ups! Gagal mengambil data toko', error.message)
@@ -89,55 +96,85 @@ class ShopController {
   }
 
   async update(req, res) {
-    const { nama, pemilik, alamat, foto, deskripsi } = req.body
+  const { nama, pemilik, alamat, deskripsi } = req.body
+  const uploadedFile = req.files?.foto
 
-    if (!nama || !pemilik || !alamat) {
+  if (!nama || !pemilik || !alamat) {
+    return errorResponse(
+      res,
+      'Ada kesalahan dalam pengisian form',
+      'nama, pemilik, dan alamat harus diisi',
+      422
+    )
+  }
+
+  if (!uploadedFile) {
+    return res.status(400).send({
+      code: 400,
+      message: "Anda belum memasukkan foto.",
+    })
+  }
+
+  const parseExtension = uploadedFile.name.split(".")
+  const extension = parseExtension[parseExtension.length - 1].toLowerCase()
+
+  if (!["jpg", "png", "jpeg", "gif"].includes(extension)) {
+    return res.status(400).send({
+      code: 400,
+      message: "Format foto tidak valid (harus .jpg, .jpeg, .png, atau .gif).",
+    })
+  }
+
+  try {
+    const shop = await Shop.findById(req.params.id)
+    if (!shop) {
       return errorResponse(
         res,
-        'Ada kesalahan dalam pengisian form',
-        'nama, pemilik, dan alamat harus diisi',
-        422
+        'Ups! Toko yang mau diubah tidak ditemukan',
+        'Data tidak ditemukan',
+        404
       )
     }
 
-    try {
-      const shop = await Shop.findById(req.params.id)
-      if (!shop) {
-        return errorResponse(
-          res,
-          'Ups! Toko yang mau diubah tidak ditemukan',
-          'Data tidak ditemukan',
-          404
-        )
-      }
+    await db.query('BEGIN')
 
-      let photoPath = shop.foto
-      if (foto) {
-        // Delete old photo
-        if (shop.foto) {
-          deleteFile(path.join(process.env.UPLOAD_DIR, shop.foto))
+    let photoPath = shop.foto
+
+    if (uploadedFile) {
+      // Delete old photo if exists
+      if (shop.foto) {
+        const oldPhotoPath = path.join(__dirname, '../../public', shop.foto)
+        if (fs.existsSync(oldPhotoPath)) {
+          fs.unlinkSync(oldPhotoPath)
         }
-
-        // Save new photo
-        const extension = foto.split(';')[0].split('/')[1]
-        const imageName = `${nama.replace(/ /g, '_')}.${extension}`
-        photoPath = `photos/shops/${imageName}`
-        saveBase64Image(foto, 'shops', imageName)
       }
 
-      const updatedShop = await Shop.update(req.params.id, {
-        nama,
-        pemilik,
-        alamat,
-        foto: photoPath,
-        deskripsi,
-      })
+      uploadedFile.name = uploadedFile.name.replace(/\s+/g, '_')
+      const date = new Date().toISOString().split('T')[0].replace(/-/g, '')
+      const imageName = `${nama.replace(/ /g, '_')}_${date}.${extension}`
+      const uploadPath = path.join(__dirname, '../../public/photos/shops', imageName)
 
-      return successResponse(res, 'Toko berhasil diperbarui', updatedShop)
-    } catch (error) {
-      return errorResponse(res, 'Ups! Ada masalah saat memperbarui toko', error.message)
+      await uploadedFile.mv(uploadPath)
+
+      photoPath = `photos/shops/${imageName}`
     }
+
+    const updatedShop = await Shop.update(req.params.id, {
+      nama,
+      pemilik,
+      alamat,
+      foto: photoPath,
+      deskripsi,
+    })
+
+    await db.query('COMMIT')
+
+    return successResponse(res, 'Toko berhasil diperbarui', updatedShop)
+  } catch (error) {
+    await db.query('ROLLBACK')
+    return errorResponse(res, 'Ups! Ada masalah saat memperbarui toko', error.message)
   }
+}
 
   async destroy(req, res) {
     try {

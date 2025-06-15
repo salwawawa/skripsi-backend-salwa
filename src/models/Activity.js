@@ -2,28 +2,38 @@ const db = require('../config/database')
 
 class Activity {
   static async findAll() {
-    const query = `
-      SELECT * FROM activities
-      ORDER BY start_date DESC
-    `
+    const query = "\
+      SELECT * FROM activities \
+      ORDER BY waktu_pelaksanaan DESC\
+    "
     const result = await db.query(query)
     return result.rows
   }
 
+  static async findByKeyword(keyword) {
+    const query = "\
+      SELECT * FROM activities \
+      WHERE nama ILIKE $1 \
+      ORDER BY waktu_pelaksanaan DESC\
+    "
+    const result = await db.query(query, [`%${keyword}%`])
+    return result.rows
+  }
+
   static async create(data) {
-    const { nama_kegiatan, start_date, end_date, deskripsi, tempat, foto } = data
-    const query = `
-      INSERT INTO activities (
-        nama_kegiatan, start_date, end_date, deskripsi, tempat, foto
-      ) VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING *
-    `
+    const { nama, waktu_pelaksanaan, peserta, deskripsi, lokasi, foto } = data
+    const query = "\
+      INSERT INTO activities (\
+        nama, waktu_pelaksanaan, peserta, deskripsi, lokasi, foto\
+      ) VALUES ($1, $2, $3, $4, $5, $6)\
+      RETURNING *\
+    "
     const result = await db.query(query, [
-      nama_kegiatan,
-      start_date,
-      end_date,
+      nama,
+      waktu_pelaksanaan,
+      peserta,
       deskripsi,
-      tempat,
+      lokasi,
       foto,
     ])
     return result.rows[0]
@@ -36,25 +46,25 @@ class Activity {
   }
 
   static async update(id, data) {
-    const { nama_kegiatan, start_date, end_date, deskripsi, tempat, foto } = data
-    const query = `
-      UPDATE activities
-      SET nama_kegiatan = $1,
-          start_date = $2,
-          end_date = $3,
-          deskripsi = $4,
-          tempat = $5,
-          foto = $6,
-          updated_at = CURRENT_TIMESTAMP
-      WHERE id = $7
-      RETURNING *
-    `
+    const { nama, waktu_pelaksanaan, peserta, deskripsi, lokasi, foto } = data
+    const query = "\
+      UPDATE activities \
+      SET nama = $1, \
+          waktu_pelaksanaan = $2, \
+          peserta = $3, \
+          deskripsi = $4, \
+          lokasi = $5, \
+          foto = $6, \
+          updated_at = CURRENT_TIMESTAMP \
+      WHERE id = $7 \
+      RETURNING *\
+    "
     const result = await db.query(query, [
-      nama_kegiatan,
-      start_date,
-      end_date,
+      nama,
+      waktu_pelaksanaan,
+      peserta,
       deskripsi,
-      tempat,
+      lokasi,
       foto,
       id,
     ])

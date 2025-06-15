@@ -63,6 +63,21 @@ class Shop {
     const result = await db.query(query, [id])
     return result.rows
   }
+
+  static async findByKeyword(keyword) {
+    const query = `
+      SELECT s.*,
+        b.nama as block_name,
+        COALESCE(json_agg(p.*) FILTER (WHERE p.id IS NOT NULL), '[]') as products
+      FROM shops s
+      LEFT JOIN blocks b ON s.block_id = b.id
+      LEFT JOIN products p ON s.id = p.shop_id
+      WHERE s.nama ILIKE $1
+      GROUP BY s.id, b.nama
+    `
+    const result = await db.query(query, [`%${keyword}%`])
+    return result.rows
+  }
 }
 
 module.exports = Shop

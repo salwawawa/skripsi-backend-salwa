@@ -2,12 +2,22 @@ const Activity = require('../models/Activity')
 const { successResponse, errorResponse } = require('../utils/response')
 const { saveBase64Image, deleteFile } = require('../utils/fileHelper')
 const path = require('path')
+const fs = require('fs')
 const db = require('../config/database')
+
+// TESTING 
+
 
 class ActivityController {
   async index(req, res) {
     try {
-      const activities = await Activity.findAll()
+      const keyword = req.query.q
+      let activities
+      if (keyword) {
+        activities = await Activity.findByKeyword(keyword)
+      } else {
+        activities = await Activity.findAll()
+      }
       return successResponse(res, 'Berhasil mengambil semua data kegiatan', activities)
     } catch (error) {
       return errorResponse(res, 'Ups! Gagal mengambil data kegiatan', error.message)
@@ -15,48 +25,57 @@ class ActivityController {
   }
 
   async store(req, res) {
-    const { nama_kegiatan, start_date, end_date, deskripsi, tempat, foto } = req.body
+    const { nama, waktu_pelaksanaan, peserta, deskripsi, lokasi } = req.body
+    const uploadedFile = req.files?.foto
 
-    // Validation
-    if (!nama_kegiatan || !start_date || !end_date || !tempat || !foto) {
+    if (!nama || !waktu_pelaksanaan || !lokasi) {
       return errorResponse(
         res,
         'Ada kesalahan dalam pengisian form',
-        'nama_kegiatan, start_date, end_date, tempat, dan foto harus diisi',
+        'nama, waktu_pelaksanaan, dan lokasi harus diisi',
         422
       )
     }
 
-    // Validate dates
-    const startDate = new Date(start_date)
-    const endDate = new Date(end_date)
-    if (endDate <= startDate) {
-      return errorResponse(
-        res,
-        'Ada kesalahan dalam pengisian form',
-        'end_date harus setelah start_date',
-        422
-      )
+    if (!uploadedFile) {
+      return res.status(400).send({
+        code: 400,
+        message: "Anda belum memasukkan foto.",
+      })
+    }
+
+    const parseExtension = uploadedFile.name.split(".")
+    const extension = parseExtension[parseExtension.length - 1].toLowerCase()
+
+    if (!["jpg", "png", "jpeg"].includes(extension)) {
+      return res.status(400).send({
+        code: 400,
+        message: "Format foto tidak valid (harus .jpg, .jpeg, atau .png).",
+      })
     }
 
     try {
       await db.query('BEGIN')
 
       let photoPath = null
-      if (foto) {
-        const extension = foto.split(';')[0].split('/')[1]
-        const imageName = `${nama_kegiatan.replace(/ /g, '_')}.${extension}`
-        photoPath = `photos/activities/${imageName}`
 
-        await saveBase64Image(foto, 'activities', imageName)
+      if (uploadedFile) {
+        uploadedFile.name = uploadedFile.name.replace(/\s+/g, '_')
+        const date = new Date().toISOString().split('T')[0].replace(/-/g, '')
+        const imageName = `${nama.replace(/ /g, '_')}_${date}.${extension}`
+        const uploadPath = path.join(__dirname, '../../public/photos/activities', imageName)
+
+        await uploadedFile.mv(uploadPath)
+
+        photoPath = `photos/activities/${imageName}`
       }
 
       const activity = await Activity.create({
-        nama_kegiatan,
-        start_date,
-        end_date,
+        nama,
+        waktu_pelaksanaan,
+        peserta,
         deskripsi,
-        tempat,
+        lokasi,
         foto: photoPath,
       })
 
@@ -87,15 +106,40 @@ class ActivityController {
   }
 
   async update(req, res) {
-    const { nama_kegiatan, start_date, end_date, deskripsi, tempat, foto } = req.body
+    // Adjusted to accept waktu_pelaksanaan as waktu_pelaksanaan or waktu_pelaksanaan (case-insensitive)
+    const { nama, waktu_pelaksanaan, waktu_pelaksanaan: waktuPelaksanaan, peserta, deskripsi, lokasi } = req.body
+    const uploadedFile = req.files?.foto
 
-    if (!nama_kegiatan || !start_date || !end_date || !tempat) {
+    console.log('req.body:', req.body)
+    console.log('req.files:', req.files)
+
+    // Use waktu_pelaksanaan or waktuPelaksanaan whichever is present
+    const waktuPelaksanaanValue = waktu_pelaksanaan || waktuPelaksanaan
+
+    if (!nama || !waktuPelaksanaanValue || !lokasi) {
       return errorResponse(
         res,
         'Ada kesalahan dalam pengisian form',
-        'nama_kegiatan, start_date, end_date, dan tempat harus diisi',
+        'nama, waktu_pelaksanaan, dan lokasi harus diisi',
         422
       )
+    }
+
+    if (!uploadedFile) {
+      return res.status(400).send({
+        code: 400,
+        message: "Anda belum memasukkan foto.",
+      })
+    }
+
+    const parseExtension = uploadedFile.name.split(".")
+    const extension = parseExtension[parseExtension.length - 1].toLowerCase()
+
+    if (!["jpg", "png", "jpeg"].includes(extension)) {
+      return res.status(400).send({
+        code: 400,
+        message: "Format foto tidak valid (harus .jpg, .jpeg, atau .png).",
+      })
     }
 
     try {
@@ -112,24 +156,32 @@ class ActivityController {
       await db.query('BEGIN')
 
       let photoPath = activity.foto
-      if (foto) {
+
+      if (uploadedFile) {
+        // Delete old photo if exists
         if (activity.foto) {
-          deleteFile(path.join(process.env.UPLOAD_DIR, activity.foto))
+          const oldPhotoPath = path.join(__dirname, '../../public', activity.foto)
+          if (fs.existsSync(oldPhotoPath)) {
+            fs.unlinkSync(oldPhotoPath)
+          }
         }
 
-        const extension = foto.split(';')[0].split('/')[1]
-        const imageName = `${nama_kegiatan.replace(/ /g, '_')}.${extension}`
-        photoPath = `photos/activities/${imageName}`
+        uploadedFile.name = uploadedFile.name.replace(/\s+/g, '_')
+        const date = new Date().toISOString().split('T')[0].replace(/-/g, '')
+        const imageName = `${nama.replace(/ /g, '_')}_${date}.${extension}`
+        const uploadPath = path.join(__dirname, '../../public/photos/activities', imageName)
 
-        await saveBase64Image(foto, 'activities', imageName)
+        await uploadedFile.mv(uploadPath)
+
+        photoPath = `photos/activities/${imageName}`
       }
 
       const updatedActivity = await Activity.update(req.params.id, {
-        nama_kegiatan,
-        start_date,
-        end_date,
+        nama,
+        waktu_pelaksanaan,
+        peserta,
         deskripsi,
-        tempat,
+        lokasi,
         foto: photoPath,
       })
 
