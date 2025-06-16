@@ -23,16 +23,24 @@ class ShopController {
   }
 
   async store(req, res) {
-    const { nama, pemilik, alamat, block_id, foto, deskripsi } = req.body
+    const { nama, pemilik, alamat, block_id, deskripsi } = req.body
+    const uploadedFile = req.files?.foto
 
     // Validation
-    if (!nama || !pemilik || !alamat || !block_id || !foto) {
+    if (!nama || !pemilik || !alamat || !block_id) {
       return errorResponse(
         res,
         'Ada kesalahan dalam pengisian form',
-        'nama, pemilik, alamat, block_id, dan foto harus diisi',
+        'nama, pemilik, alamat, dan block_id harus diisi',
         422
       )
+    }
+
+    if (!uploadedFile) {
+      return res.status(400).send({
+        code: 400,
+        message: "Anda belum memasukkan foto.",
+      })
     }
 
     try {
@@ -48,19 +56,16 @@ class ShopController {
       }
 
       let photoPath = null
-      if (foto) {
-        const extension = foto.split(';')[0].split('/')[1]
-        const imageName = `${nama.replace(/ /g, '_')}.${extension}`
+
+      if (uploadedFile) {
+        uploadedFile.name = uploadedFile.name.replace(/\s+/g, '_')
+        const date = new Date().toISOString().split('T')[0].replace(/-/g, '')
+        const imageName = `${nama.replace(/ /g, '_')}_${date}.${uploadedFile.name.split('.').pop().toLowerCase()}`
+        const uploadPath = path.join(__dirname, '../../public/photos/shops', imageName)
+
+        await uploadedFile.mv(uploadPath)
+
         photoPath = `photos/shops/${imageName}`
-
-        // Create directory if not exists
-        const dir = path.join(process.env.UPLOAD_DIR, 'shops')
-        if (!fs.existsSync(dir)) {
-          fs.mkdirSync(dir, { recursive: true })
-        }
-
-        // Save image
-        saveBase64Image(foto, 'shops', imageName)
       }
 
       const shop = await Shop.create({

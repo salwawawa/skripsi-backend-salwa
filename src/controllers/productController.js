@@ -22,16 +22,24 @@ class ProductController {
   }
 
   async store(req, res) {
-    const { shop_id, category_id, nama, harga, foto, description } = req.body
+    const { shop_id, category_id, nama, harga, description } = req.body
+    const uploadedFile = req.files?.foto
 
     // Validation
-    if (!shop_id || !category_id || !nama || !harga || !foto) {
+    if (!shop_id || !category_id || !nama || !harga) {
       return errorResponse(
         res,
         'Ada kesalahan dalam pengisian form',
-        'shop_id, category_id, nama, harga, dan foto harus diisi',
+        'shop_id, category_id, nama, dan harga harus diisi',
         422
       )
+    }
+
+    if (!uploadedFile) {
+      return res.status(400).send({
+        code: 400,
+        message: "Anda belum memasukkan foto.",
+      })
     }
 
     if (isNaN(harga)) {
@@ -41,6 +49,16 @@ class ProductController {
         'harga harus berupa angka',
         422
       )
+    }
+
+    const parseExtension = uploadedFile.name.split(".")
+    const extension = parseExtension[parseExtension.length - 1].toLowerCase()
+
+    if (!["jpg", "png", "jpeg", "gif"].includes(extension)) {
+      return res.status(400).send({
+        code: 400,
+        message: "Format foto tidak valid (harus .jpg, .jpeg, .png, atau .gif).",
+      })
     }
 
     try {
@@ -66,13 +84,16 @@ class ProductController {
       await db.query('BEGIN')
 
       let photoPath = null
-      if (foto) {
-        const extension = foto.split(';')[0].split('/')[1]
+
+      if (uploadedFile) {
+        uploadedFile.name = uploadedFile.name.replace(/\s+/g, '_')
         const date = new Date().toISOString().split('T')[0].replace(/-/g, '')
         const imageName = `${shop_id}_${date}_${nama.replace(/ /g, '_')}.${extension}`
-        photoPath = `photos/products/${imageName}`
+        const uploadPath = path.join(__dirname, '../../public/photos/products', imageName)
 
-        await saveBase64Image(foto, 'products', imageName)
+        await uploadedFile.mv(uploadPath)
+
+        photoPath = `photos/products/${imageName}`
       }
 
       const product = await Product.create({
